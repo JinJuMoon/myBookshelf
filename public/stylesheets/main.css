@@ -1,0 +1,9 @@
+body {
+  background: url("/img/background.jpg") no-repeat;
+  background-size: auto cover;
+}
+
+.btn {
+  background-color: #2f86a2;
+  border: #2f86a2;
+}
