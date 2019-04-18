@@ -1,31 +1,54 @@
 var bodyParser = require("body-parser"),
-    mongoose = require("mongoose"),
-    express  = require("express"),
-    app      = express();
+    mongoose   = require("mongoose"),
+    express    = require("express"),
+    app        = express();
+
+var passport = require("passport"),
+    LocalStrategy = require("passport-local")
 
 var Book = require("./models/book");
+var User = require("./models/user");
 
-//sample data
-var book1 = [{
-  title: "내 마음을 읽는 시간",
-  author: "moonui",
-  image: "http://t1.daumcdn.net/liveboard/gilbut/e5594b51aeeb40b180b6bf2e829f5fb7.jpg",
-  review: "매우 좋았다"
-},
-{
-  title: "내 마음을 읽는 시간",
-  author: "moonui",
-  image: "http://t1.daumcdn.net/liveboard/gilbut/e5594b51aeeb40b180b6bf2e829f5fb7.jpg",
-  review: "매우 좋았다"
-}]
+// passport configuration
+app.use(require("express-session")({
+    secret: "mozzi is so cute and best!",
+    resave: false,
+    saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
-Book.create(book1, function(err, book1){
-  if(err){
-    console.log(err);
-  } else {
-    console.log(book1);
-  }
-})
+// app.use(function(req, res, next){
+//   res.locals.currentUser = req.user;
+//   next();
+// });
+
+
+
+// //sample data
+// var book1 = [{
+//   title: "내 마음을 읽는 시간",
+//   author: "moonui",
+//   image: "http://t1.daumcdn.net/liveboard/gilbut/e5594b51aeeb40b180b6bf2e829f5fb7.jpg",
+//   review: "매우 좋았다"
+// },
+// {
+//   title: "내 마음을 읽는 시간",
+//   author: "moonui",
+//   image: "http://t1.daumcdn.net/liveboard/gilbut/e5594b51aeeb40b180b6bf2e829f5fb7.jpg",
+//   review: "매우 좋았다"
+// }]
+//
+// Book.create(book1, function(err, book1){
+//   if(err){
+//     console.log(err);
+//   } else {
+//     console.log(book1);
+//   }
+// })
 
 
 
@@ -88,6 +111,25 @@ app.get("/bookshelf/:id", function(req,res){
   });
 })
 
+
+
+// register page
+app.get("/register", function(req,res){
+  res.render("register");
+});
+// register logic
+app.post("/register", function(req,res){
+  var newUser = new User({username: req.body.username});
+  User.register(newUser, req.body.password, function(err, user){
+    if(err){
+      console.log(err);
+      return res.render("register");
+    }
+    passport.authenticate("local")(req,res,function(){
+      res.redirect("/bookshelf");
+    });
+  });
+});
 
 
 // 커스텀 404 페이지
