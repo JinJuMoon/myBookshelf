@@ -1,20 +1,94 @@
-var express = require('express'),
-    app     = express();
+var bodyParser = require("body-parser"),
+    mongoose = require("mongoose"),
+    express  = require("express"),
+    app      = express();
+
+var Book = require("./models/book");
+
+//sample data
+var book1 = [{
+  title: "내 마음을 읽는 시간",
+  author: "moonui",
+  image: "http://t1.daumcdn.net/liveboard/gilbut/e5594b51aeeb40b180b6bf2e829f5fb7.jpg",
+  review: "매우 좋았다"
+},
+{
+  title: "내 마음을 읽는 시간",
+  author: "moonui",
+  image: "http://t1.daumcdn.net/liveboard/gilbut/e5594b51aeeb40b180b6bf2e829f5fb7.jpg",
+  review: "매우 좋았다"
+}]
+
+Book.create(book1, function(err, book1){
+  if(err){
+    console.log(err);
+  } else {
+    console.log(book1);
+  }
+})
+
+
+
+mongoose.connect("mongodb://localhost:27017/mybookshelf", {useNewUrlParser: true});
 
 app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static(__dirname + '/public'));
 
-app.get('/', function(req,res){
+app.get("/", function(req,res){
   res.render('home');
 });
+
+
 
 app.get('/about', function(req,res){
   res.render('about');
 });
 
+// index page
 app.get('/bookshelf', function(req,res){
-  res.render('bookshelf/index');
+  Book.find({}, function(err, books){
+    if(err){
+      console.log(err);
+    } else {
+    res.render("bookshelf/index", {books: books});
+    }
+  })
 });
+
+// create page
+app.post("/bookshelf", function(req,res){
+  var title = req.body.title;
+  var author = req.body.author;
+  var image = req.body.image;
+  var review = req.body.review;
+  var newBook = {title: title, author: author, image: image, review: review}
+  Book.create(newBook, function(err, createdBook){
+    if(err){
+      console.log(err);
+    } else {
+      res.redirect("/bookshelf");
+    }
+  })
+});
+
+// new page
+app.get("/bookshelf/new", function(req,res){
+  res.render("bookshelf/new");
+});
+
+// show page
+app.get("/bookshelf/:id", function(req,res){
+  Book.findById(req.params.id).exec(function(err, foundBook){
+    if(err){
+      console.log(err);
+    } else {
+      res.render("bookshelf/show", {book: foundBook});
+    }
+  });
+})
+
+
 
 // 커스텀 404 페이지
 app.use(function(req,res){
